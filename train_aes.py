@@ -1,11 +1,12 @@
-import pandas as pd
-import torch
-from torch.utils.data import DataLoader, Dataset
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import pickle
 
-from autoencoder_basic import AutoEncoder
-from autoencoder_common import train_autoencoder
+import pandas as pd
+import torch
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader, Dataset
+
+from autoencoder import AutoEncoder, train_autoencoder
+
 
 class DxDataset(Dataset):
 
