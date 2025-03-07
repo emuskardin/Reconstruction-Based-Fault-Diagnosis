@@ -1,0 +1,9 @@
+{
+    "type": "basic",
+    "input_dim": 10,
+    "hidden_dimension": [
+        64,
+        32,
+        16
+    ]
+}
