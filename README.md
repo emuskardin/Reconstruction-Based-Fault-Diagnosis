@@ -1,3 +1,4 @@
+# LiU-ICE Industrial Fault Diagnosis Benchmark - DeluXe 2025
 # Competition Setup Guide
 
 This guide will walk you through setting up and running the competition environment using Docker on both Ubuntu and Windows. The repository contains a Dockerfile, a Python class interface, and an evaluation script to ensure consistent evaluation for all participants.

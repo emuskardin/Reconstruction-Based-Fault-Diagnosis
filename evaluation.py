@@ -37,7 +37,8 @@ avg_time = []
 for data_set_name, data in test_data.items():
     num_samples = data.shape[0]
 
-    num_test_per_category = 10
+    num_test_per_category = 1000
+
     num_test = num_test_per_category if 'NF' in data_set_name or 'f_iml' in data_set_name else num_test_per_category//2
     for _ in range(num_test):  # Run multiple test iterations
         sample = data.iloc[random.randint(0, num_samples - 1)].to_frame().transpose()
@@ -58,6 +59,8 @@ for data_set_name, data in test_data.items():
             if 0 <= predicted_category < len(dataset_mapping):
                 confusion_matrix[actual_category, predicted_category] += 1  # Update confusion matrix
 
+
+print(f'Out of distribution hits: {predictor.out_of_distribution_hits}')
 
 df_cm = pd.DataFrame(confusion_matrix, index=dataset_mapping, columns=dataset_mapping)
 

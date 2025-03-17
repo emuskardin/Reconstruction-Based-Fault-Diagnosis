@@ -1,11 +1,16 @@
+import json
 import pickle
+from statistics import mean, stdev
 
+import numpy as np
 import pandas as pd
 import torch
-from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from torch.utils.data import DataLoader, Dataset
 
-from autoencoder import AutoEncoder, train_autoencoder
+from autoencoder import AutoEncoder, train_autoencoder, get_data_mean_squared_errors
+from utils import plot_reconstruction_loss
 
 
 class DxDataset(Dataset):
@@ -28,6 +33,7 @@ def get_all_data(path, fields_to_keep=None):
     return df
 
 training_folder = 'data/trainingdata/'
+save_path = 'trained_models/'
 
 data_per_fault = {'f_iml' : ['wltp_f_iml_6mm.csv'],
                   'f_pic' : ['wltp_f_pic_090.csv', 'wltp_f_pic_110.csv'],
@@ -74,11 +80,29 @@ for fault_type, files in  data_per_fault.items():
 
     ae = AutoEncoder(input_dim=num_features, hidden_dimension=[64, 32, 16])
 
-    train_autoencoder(ae, DataLoader(data_set, batch_size=32, shuffle=True), 10, model_name=fault_type)
+    # train autoencoder
+    train_autoencoder(ae, DataLoader(data_set, batch_size=16, shuffle=True), 10,
+                      model_name=fault_type, save_path=save_path)
+
+    # extract nominal loss and save to metadata json
+    nominal_losses = get_data_mean_squared_errors(ae, data_set)
+
+    with open(f'{save_path}/{fault_type}/metadata.json', "w", encoding="utf-8") as f:
+        ae.metadata['mean_loss'] = mean(nominal_losses)
+        ae.metadata['standard_dev'] = stdev(nominal_losses)
+        ae.metadata['percentile_90'] = np.percentile(nominal_losses, 90)
+        ae.metadata['percentile_95'] = np.percentile(nominal_losses, 95)
+        ae.metadata['percentile_98'] = np.percentile(nominal_losses, 98)
+
+        ae.metadata['max_loss'] = max(nominal_losses)
+
+        json.dump(ae.metadata, f, indent=4)
+
+    plot_reconstruction_loss(save_path + fault_type, nominal_losses, ae.metadata['mean_loss'],
+                             ae.metadata['standard_dev'], ae.metadata['percentile_95'])
 
     # Normalizer does not work
     # 32 batch, StandardScaler, and 32, or 16 initial worked well
     # MinMax scaler + 64 model -> works well!
-    # Standard scaler, shuffle 32 batch, + 64 model -> works well!
-
+    # Standard scaler, shuffle 32 batch, + 64 model -> works very well!
 

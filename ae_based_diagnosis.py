@@ -1,4 +1,5 @@
 import pickle
+from collections import Counter
 
 import numpy as np
 import torch
@@ -7,6 +8,7 @@ import torch.nn.functional as F
 
 
 from autoencoder import load_autoencoder
+
 
 # detection (dim 1, boolean) - is a flag stating when a fault has been detected (detection = 0 if no fault and 1 if fault).
 # isolation (dim 1x5, float) - non-negative ranking of diagnosis candidates in the following order:
@@ -18,6 +20,8 @@ class AutoencoderBasedDiagnosis:
     def __init__(self):
         self.scaler = None
         self.aes = {}
+
+        self.out_of_distribution_hits = 0
 
     def Initialize(self):
 
@@ -37,41 +41,37 @@ class AutoencoderBasedDiagnosis:
 
         scaled_sample = torch.tensor(self.scaler.transform(sample), dtype=torch.float32)
 
+        # save losses of all AEs
         losses = []
+        # save weather the reconstruction loss is beyond nominal threshold for each AE
+        above_anomaly_threshold = []
+
         for ae_name, ae in self.aes.items():
             reconstruction = ae(scaled_sample)
-            loss = - mse_loss(reconstruction, scaled_sample).item()
-            losses.append(loss)
+            loss = mse_loss(reconstruction, scaled_sample).item()
+            losses.append(- loss)
+            above_anomaly_threshold.append(loss >= ae.reconstruction_loss_metrics['percentile_98'])
 
         min_loss_idx = losses.index(max(losses))
+
+        if above_anomaly_threshold[min_loss_idx]:
+            self.out_of_distribution_hits += 1
 
         if min_loss_idx == 4:
             nominal_behaviour = True
             isolation = np.zeros((1, 5))
         else:
             nominal_behaviour = False
-
-            # Example tensor
             x = torch.tensor(losses[:4])
 
-            # Apply softmax
-            softmax_result = F.softmax(x, dim=0).numpy()
-            isolation = softmax_result
+            # Apply softmax with scaling
+            temperature = 0.1
+            isolation = F.softmax(x / temperature, dim=0).numpy()
 
-        # TODO remove this in future
-        # Example tensor
+            assert 0.99 <= sum(isolation) <= 1.01
 
-        x = torch.tensor(losses[:4])
-
-        # Apply softmax
-        temperature = 0.1
-        softmax_result = F.softmax(x / temperature, dim=0).numpy()
-        if not nominal_behaviour:
-            print(softmax_result)
-
-        assert 0.99 <= sum(softmax_result) <= 1.01
-
-        isolation = softmax_result
+        # if not nominal_behaviour:
+        #    print(isolation)
 
         return nominal_behaviour, isolation
 
