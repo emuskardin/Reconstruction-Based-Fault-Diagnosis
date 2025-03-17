@@ -62,16 +62,27 @@ class AutoencoderBasedDiagnosis:
             isolation = np.zeros((1, 5))
         else:
             nominal_behaviour = False
-            x = torch.tensor(losses[:4])
 
+            # if reconstruction loss of the detected fault is within reconstruction loss
+            x = torch.tensor(losses[:4])
             # Apply softmax with scaling
-            temperature = 0.1
+            temperature = 0.2
             isolation = F.softmax(x / temperature, dim=0).numpy()
+            isolation = np.append(isolation, 0)
+            assert np.argmax(isolation) == min_loss_idx
+
+            if above_anomaly_threshold[min_loss_idx]:
+                max_val = isolation[min_loss_idx]
+                new_fault = [0] * 5
+                new_fault[min_loss_idx] = 1 - max_val
+                new_fault[4] = max_val
+                isolation = np.array(new_fault)
 
             assert 0.99 <= sum(isolation) <= 1.01
 
-        # if not nominal_behaviour:
-        #    print(isolation)
+        # conform to competition format
+        nominal_behaviour = np.array([nominal_behaviour], dtype=bool)
+        isolation = isolation.reshape((1,5))
 
         return nominal_behaviour, isolation
 

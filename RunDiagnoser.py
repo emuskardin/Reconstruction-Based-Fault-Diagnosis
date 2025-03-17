@@ -4,13 +4,14 @@ import time
 import sys
 import os
 
+from ae_based_diagnosis import AutoencoderBasedDiagnosis
 
 TIMEOUT = 0.1
 
 ## Create diagnosis system class
 
 # Create diagnosis system. 
-EDS = ExampleDiagnosisSystem() # TODO
+EDS = AutoencoderBasedDiagnosis() # TODO
 
 ## Initialize diagnosis system
 # The diagnosis system parameter file is created by calling EDS.Train()
@@ -23,7 +24,7 @@ if len(sys.argv) != 2:
     sys.exit(1)
 
 input_file = sys.argv[1]
-test_data = pd.read_csv(input_file, sep=';')
+test_data = pd.read_csv(input_file, sep=',')
 
 # Log diagnosis output
 output_file = os.path.join('results', 'output_' + os.path.basename(input_file))
@@ -35,6 +36,8 @@ for time_idx in range(len(test_data)):
     t = time.time()
 
     # Feed sample to diagnosis system and return diagnosis output
+    x = test_data.iloc[time_idx,:].to_frame().transpose()
+
     detection, isolation = EDS.Input(test_data.iloc[time_idx,:].to_frame().transpose())
     
     elapsed = time.time() - t

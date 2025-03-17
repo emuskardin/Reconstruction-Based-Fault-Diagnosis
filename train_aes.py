@@ -45,7 +45,11 @@ data_per_fault = {'f_iml' : ['wltp_f_iml_6mm.csv'],
 all_fault_data = []
 for fault_type, files in data_per_fault.items():
     for f in files:
-        df = get_all_data(training_folder + f).query("time >= 115")
+        df = get_all_data(training_folder + f)
+
+        if fault_type != 'NF':
+            df.query("time >= 115", inplace=True)
+
         df.drop(columns=['time'], inplace=True)
         all_fault_data.append(df)
 

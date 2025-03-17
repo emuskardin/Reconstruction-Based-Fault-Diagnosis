@@ -24,15 +24,13 @@ data_set = 'test_data'
 test_data = load_csv_files_from_folder(f'data/{data_set}')
 
 # Confusion matrix structure
-confusion_matrix = np.zeros((5, 5), dtype=int)  # Assuming 5 categories
+confusion_matrix = np.zeros((6, 6), dtype=int)  # Assuming 5 categories
 
 # Dataset mapping (order is important for indexing)
-dataset_mapping = ['f_iml', 'f_pic', 'f_pim', 'f_waf', 'NF']
+dataset_mapping = ['f_iml', 'f_pic', 'f_pim', 'f_waf', 'Other', 'NF']
 
 predictor = AutoencoderBasedDiagnosis()
 predictor.Initialize()
-
-# https://vehsys.gitlab-pages.liu.se/dx25benchmarks/liuice/liuice_index
 
 avg_time = []
 for data_set_name, data in test_data.items():
@@ -42,8 +40,8 @@ for data_set_name, data in test_data.items():
 
     num_test = num_test_per_category if 'NF' in data_set_name or 'f_iml' in data_set_name or data_set == 'test_data' else num_test_per_category // 2
 
-    for _ in range(num_test):  # Run multiple test iterations
-        sample = data.iloc[random.randint(0, num_samples - 1)].to_frame().transpose()
+    for _ in range(num_test):
+        sample = data.iloc[random.randint(0, num_samples - 1),:].to_frame().transpose()
 
         s = time.time()
         nominal_behaviour, isolation = predictor.Input(sample)
@@ -51,15 +49,15 @@ for data_set_name, data in test_data.items():
 
         # Find the actual dataset category
         actual_category = next((dataset_mapping.index(key) for key in dataset_mapping if key in data_set_name), None)
+        if actual_category is None:
+            continue
 
-        if actual_category is not None:
-            if actual_category == dataset_mapping.index('NF'):
-                predicted_category = dataset_mapping.index('NF') if nominal_behaviour else np.argmax(isolation)  # -1 if misclassified
-            else:
-                predicted_category = np.argmax(isolation)  # Get the predicted index
+        if nominal_behaviour:
+            predicted_category = dataset_mapping.index('NF')
+        else:
+            predicted_category = np.argmax(isolation)
 
-            if 0 <= predicted_category < len(dataset_mapping):
-                confusion_matrix[actual_category, predicted_category] += 1  # Update confusion matrix
+        confusion_matrix[actual_category, predicted_category] += 1
 
 
 print(f'Out of distribution hits: {predictor.out_of_distribution_hits}')
