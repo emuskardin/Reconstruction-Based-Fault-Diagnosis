@@ -32,7 +32,7 @@ def get_all_data(path, fields_to_keep=None):
         df = df[fields_to_keep]
     return df
 
-training_folder = 'data/trainingdata/'
+training_folder = 'data/training_data/'
 save_path = 'trained_models/'
 
 data_per_fault = {'f_iml' : ['wltp_f_iml_6mm.csv'],
@@ -64,20 +64,21 @@ for fault_type, files in  data_per_fault.items():
     print(fault_type)
 
     # Load all files, filter, and concatenate
-    all_data = [get_all_data(training_folder + f).query("time >= 115") for f in files]
+    all_data = pd.concat([get_all_data(training_folder + f) for f in files], ignore_index=True)
 
-    for d in all_data:
-        d.drop(columns=['time'], inplace=True)
+    if fault_type != 'NF':
+        all_data.query("time >= 115", inplace=True)
 
-    window_size = 1
-    num_features = all_data[0].shape[1]
+    train_df, test_df = train_test_split(all_data, test_size=0.2, shuffle=True)
+    # train_df = all_data
 
-    # Scale each DataFrame individually while preserving the original structure
-    scaled_data = pd.concat([pd.DataFrame(scaler.transform(df), columns=df.columns) for df in all_data],
-                            ignore_index=True)
+    test_df.to_csv(f'data/test_data/test_set_{fault_type}.csv', index=False)
+
+    train_df.drop(columns=['time'], inplace=True)
+    scaled_data = pd.DataFrame(scaler.transform(train_df), columns=train_df.columns)
 
     data_set = DxDataset(scaled_data)
-
+    num_features = train_df.shape[1]
     ae = AutoEncoder(input_dim=num_features, hidden_dimension=[64, 32, 16])
 
     # train autoencoder

@@ -20,7 +20,8 @@ def load_csv_files_from_folder(folder_path):
 
     return dataframes
 
-test_data = load_csv_files_from_folder('data/trainingdata')
+data_set = 'test_data'
+test_data = load_csv_files_from_folder(f'data/{data_set}')
 
 # Confusion matrix structure
 confusion_matrix = np.zeros((5, 5), dtype=int)  # Assuming 5 categories
@@ -39,7 +40,8 @@ for data_set_name, data in test_data.items():
 
     num_test_per_category = 1000
 
-    num_test = num_test_per_category if 'NF' in data_set_name or 'f_iml' in data_set_name else num_test_per_category//2
+    num_test = num_test_per_category if 'NF' in data_set_name or 'f_iml' in data_set_name or data_set == 'test_data' else num_test_per_category // 2
+
     for _ in range(num_test):  # Run multiple test iterations
         sample = data.iloc[random.randint(0, num_samples - 1)].to_frame().transpose()
 
