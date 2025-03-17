@@ -10,7 +10,6 @@ from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from torch.utils.data import DataLoader, Dataset
 
 from autoencoder import AutoEncoder, train_autoencoder, get_data_mean_squared_errors
-from utils import plot_reconstruction_loss
 
 
 class DxDataset(Dataset):
@@ -102,9 +101,6 @@ for fault_type, files in  data_per_fault.items():
         ae.metadata['max_loss'] = max(nominal_losses)
 
         json.dump(ae.metadata, f, indent=4)
-
-    plot_reconstruction_loss(save_path + fault_type, nominal_losses, ae.metadata['mean_loss'],
-                             ae.metadata['standard_dev'], ae.metadata['percentile_95'])
 
     # Normalizer does not work
     # 32 batch, StandardScaler, and 32, or 16 initial worked well
