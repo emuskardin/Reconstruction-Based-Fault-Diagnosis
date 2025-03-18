@@ -1,12 +1,14 @@
 # Reconstruction-Based Fault Classification
 
-**TLDR: use an ensemble of autoencoders to detect and isolate a fault in a cyber-physical system**
-
 <picture style="align: center; padding-bottom: 3mm;">
   <img alt="" src="./data/fault_isolation_abstract_procedure.PNG">
 </picture>
 
 This repository contains code required to participate in the [LiU-ICE DeluXe Diagnosis Competition](https://vehsys.gitlab-pages.liu.se/dx25benchmarks/liuice/liuice_index).
+
+**TLDR: use an ensemble of autoencoders to detect and isolate a fault in a cyber-physical system**
+
+Proposed method is **system-agnostic**, that it is doing not make any assumptions about the underlying system's dynamics, as long as there is a system simulation log per fault.
 
 ### High-level overview
 

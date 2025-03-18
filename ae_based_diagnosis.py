@@ -1,11 +1,9 @@
 import pickle
-from collections import Counter
 
 import numpy as np
 import torch
-from torch.nn.functional import mse_loss
 import torch.nn.functional as F
-
+from torch.nn.functional import mse_loss
 
 from autoencoder import load_autoencoder
 

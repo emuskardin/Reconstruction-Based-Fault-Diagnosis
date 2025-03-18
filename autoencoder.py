@@ -1,4 +1,3 @@
-# Define the VAE architecture
 import json
 import os
 
@@ -56,8 +55,6 @@ class AutoEncoder(nn.Module):
 
 
 def load_autoencoder(path_to_folder):
-    from autoencoder import AutoEncoder
-
     metadata = json.load(open(f'{path_to_folder}/metadata.json'))
     model_weights = f'{path_to_folder}/model.pt'
 

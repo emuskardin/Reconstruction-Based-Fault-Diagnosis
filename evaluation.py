@@ -24,10 +24,10 @@ data_set = 'test_data'
 test_data = load_csv_files_from_folder(f'data/{data_set}')
 
 # Confusion matrix structure
-confusion_matrix = np.zeros((6, 6), dtype=int)  # Assuming 5 categories
+confusion_matrix = np.zeros((5, 6), dtype=int)  # Assuming 5 categories
 
 # Dataset mapping (order is important for indexing)
-dataset_mapping = ['f_iml', 'f_pic', 'f_pim', 'f_waf', 'Other', 'NF']
+dataset_mapping = ['NF', 'f_iml', 'f_pic', 'f_pim', 'f_waf', 'Other']
 
 predictor = AutoencoderBasedDiagnosis()
 predictor.Initialize()
@@ -55,14 +55,14 @@ for data_set_name, data in test_data.items():
         if nominal_behaviour:
             predicted_category = dataset_mapping.index('NF')
         else:
-            predicted_category = np.argmax(isolation)
+            predicted_category = np.argmax(isolation) + 1 # +1 since NF is the first category in confusion matrix
 
         confusion_matrix[actual_category, predicted_category] += 1
 
 
 print(f'Out of distribution hits: {predictor.out_of_distribution_hits}')
 
-df_cm = pd.DataFrame(confusion_matrix, index=dataset_mapping, columns=dataset_mapping)
+df_cm = pd.DataFrame(confusion_matrix, index=dataset_mapping[:-1], columns=dataset_mapping)
 
 plt.figure(figsize=(8, 6))
 sns.heatmap(df_cm, annot=True, fmt="d", cmap="Blues", linewidths=1, linecolor="black")
