@@ -1,7 +1,7 @@
 import json
-import pickle
 from statistics import mean, stdev
 
+import joblib
 import numpy as np
 import pandas as pd
 import torch
@@ -53,40 +53,40 @@ for fault_type, files in data_per_fault.items():
         all_fault_data.append(df)
 
 # Create a single scaler instance for ALL fault types
-scaler = StandardScaler()
+scaler = RobustScaler()
 
 # Fit the scaler on all data across all fault types
 combined_data = pd.concat(all_fault_data, ignore_index=True)
 scaler.fit(combined_data)
 
-with open('trained_models/standardScaler.pickle', 'wb') as handle:
-    pickle.dump(scaler, handle, protocol=pickle.HIGHEST_PROTOCOL)
+joblib.dump(scaler, 'trained_models/scaler.sk')
 
 for fault_type, files in  data_per_fault.items():
     print('----------------------------------------')
     print(fault_type)
 
+
     # Load all files, filter, and concatenate
     all_data = pd.concat([get_all_data(training_folder + f) for f in files], ignore_index=True)
 
     if fault_type != 'NF':
-        all_data.query("time >= 115", inplace=True)
+        all_data.query("time >= 118", inplace=True)
 
-    train_df, test_df = train_test_split(all_data, test_size=0.2, shuffle=True)
+    train_df, test_df = train_test_split(all_data, test_size=0.05, shuffle=True)
     # train_df = all_data
 
-    test_df.to_csv(f'data/test_data/test_set_{fault_type}.csv', index=False)
+    # test_df.to_csv(f'data/test_data/test_set_{fault_type}.csv', index=False)
 
     train_df.drop(columns=['time'], inplace=True)
     scaled_data = pd.DataFrame(scaler.transform(train_df), columns=train_df.columns)
 
     data_set = DxDataset(scaled_data)
     num_features = train_df.shape[1]
-    ae = AutoEncoder(input_dim=num_features, hidden_dimension=[64, 32, 16])
+    ae = AutoEncoder(input_dim=num_features, hidden_dimension=[64, 32, 16,])
 
     # train autoencoder
-    train_autoencoder(ae, DataLoader(data_set, batch_size=16, shuffle=True), 10,
-                      model_name=fault_type, save_path=save_path)
+    train_autoencoder(ae, DataLoader(data_set, batch_size=16, shuffle=True), 15,
+                      model_name=fault_type, save_path=save_path, save_every=None)
 
     # extract nominal loss and save to metadata json
     nominal_losses = get_data_mean_squared_errors(ae, data_set)
@@ -101,9 +101,4 @@ for fault_type, files in  data_per_fault.items():
         ae.metadata['max_loss'] = max(nominal_losses)
 
         json.dump(ae.metadata, f, indent=4)
-
-    # Normalizer does not work
-    # 32 batch, StandardScaler, and 32, or 16 initial worked well
-    # MinMax scaler + 64 model -> works well!
-    # Standard scaler, shuffle 32 batch, + 64 model -> works very well!
 

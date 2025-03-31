@@ -1,5 +1,4 @@
-import pickle
-
+import joblib
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -25,14 +24,14 @@ class AutoencoderBasedDiagnosis:
 
         save_folder = 'trained_models/'
 
-        with open(save_folder + 'standardScaler.pickle', 'rb') as handle:
-            self.scaler = pickle.load(handle)
+        self.scaler = joblib.load('trained_models/scaler.sk')
 
         assert self.scaler is not None
         print("Scaler successfully loaded")
 
         for ae_name in ['f_iml', 'f_pic', 'f_pim', 'f_waf', 'NF']:
-            self.aes[ae_name] = load_autoencoder(save_folder + ae_name)
+            self.aes[ae_name] = load_autoencoder(save_folder + ae_name, epoch=None)
+            self.aes[ae_name].eval()
 
     def Input(self, sample):
         sample.drop(columns=['time'], inplace=True)

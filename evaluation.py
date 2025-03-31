@@ -16,11 +16,15 @@ def load_csv_files_from_folder(folder_path):
         if file_name.endswith('.csv'):
             file_path = os.path.join(folder_path, file_name)
             df = pd.read_csv(file_path)
+
+            if 'NF' not in file_path:
+                df.query("time >= 118", inplace=True)
+
             dataframes[file_name] = df
 
     return dataframes
 
-data_set = 'test_data'
+data_set = 'training_data'
 test_data = load_csv_files_from_folder(f'data/{data_set}')
 
 # Confusion matrix structure
@@ -35,10 +39,13 @@ predictor.Initialize()
 avg_time = []
 for data_set_name, data in test_data.items():
     num_samples = data.shape[0]
+    # print(num_samples)
 
     num_test_per_category = 1000
 
     num_test = num_test_per_category if 'NF' in data_set_name or 'f_iml' in data_set_name or data_set == 'test_data' else num_test_per_category // 2
+
+    # num_test = num_test_per_category
 
     for _ in range(num_test):
         sample = data.iloc[random.randint(0, num_samples - 1),:].to_frame().transpose()
@@ -65,7 +72,7 @@ print(f'Out of distribution hits: {predictor.out_of_distribution_hits}')
 df_cm = pd.DataFrame(confusion_matrix, index=dataset_mapping[:-1], columns=dataset_mapping)
 
 plt.figure(figsize=(8, 6))
-sns.heatmap(df_cm, annot=True, fmt="d", cmap="Blues", linewidths=1, linecolor="black")
+sns.heatmap(df_cm, annot=True, fmt="d", cmap="Blues", linewidths=1, linecolor="black",)
 plt.title("Confusion Matrix for Classification Results")
 plt.ylabel("Actual Category")
 plt.xlabel("Predicted Category")
