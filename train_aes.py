@@ -65,6 +65,9 @@ for fault_type, files in  data_per_fault.items():
     print('----------------------------------------')
     print(fault_type)
 
+    if 'pic' not in fault_type:
+        continue
+
 
     # Load all files, filter, and concatenate
     all_data = pd.concat([get_all_data(training_folder + f) for f in files], ignore_index=True)
@@ -75,18 +78,18 @@ for fault_type, files in  data_per_fault.items():
     train_df, test_df = train_test_split(all_data, test_size=0.05, shuffle=True)
     # train_df = all_data
 
-    # test_df.to_csv(f'data/test_data/test_set_{fault_type}.csv', index=False)
+    test_df.to_csv(f'data/test_data/test_set_{fault_type}.csv', index=False)
 
     train_df.drop(columns=['time'], inplace=True)
     scaled_data = pd.DataFrame(scaler.transform(train_df), columns=train_df.columns)
 
     data_set = DxDataset(scaled_data)
     num_features = train_df.shape[1]
-    ae = AutoEncoder(input_dim=num_features, hidden_dimension=[64, 32, 16,])
+    ae = AutoEncoder(input_dim=num_features, hidden_dimension=[128, 64, 32, 16,])
 
     # train autoencoder
-    train_autoencoder(ae, DataLoader(data_set, batch_size=16, shuffle=True), 15,
-                      model_name=fault_type, save_path=save_path, save_every=None)
+    train_autoencoder(ae, DataLoader(data_set, batch_size=32, shuffle=True), 20,
+                      model_name=fault_type, save_path=save_path, save_every=1)
 
     # extract nominal loss and save to metadata json
     nominal_losses = get_data_mean_squared_errors(ae, data_set)
