@@ -30,7 +30,7 @@ class AutoencoderBasedDiagnosis:
         print("Scaler successfully loaded")
 
         for ae_name in ['f_iml', 'f_pic', 'f_pim', 'f_waf', 'NF']:
-            self.aes[ae_name] = load_autoencoder(save_folder + ae_name, epoch=15)
+            self.aes[ae_name] = load_autoencoder(save_folder + ae_name)
             self.aes[ae_name].eval()
 
     def Input(self, sample):

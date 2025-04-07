@@ -24,7 +24,7 @@ def load_csv_files_from_folder(folder_path):
 
     return dataframes
 
-data_set = 'test_data'
+data_set = 'training_data'
 test_data = load_csv_files_from_folder(f'data/{data_set}')
 
 # Confusion matrix structure

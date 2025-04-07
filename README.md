@@ -12,12 +12,20 @@ Proposed method is **system-agnostic**, that it is doing not make any assumption
 
 ### High-level overview
 
-1. Scale the data using standard scaler
-2. Train an autoencoder to reconstruct samples from data logs of each fault and of the nominal behaviour
+### Training
+1. Scale the data using a scaler of your choice (we use Robust scaler)
+2. For each fault type train an autoencoder. You can vary the hyperparameters for each autoencoder, as long as they all use same scaled data. 
 3. Compute reconstruction losses with trained autoencoder, and 98 percentile of reconstruction losses serves as an anomaly treshold (last step)
-4. For each new sample, compute reconstruction losses with all autoencoders
-5. Fault is isolated with the smallest loss
-6. However, fault might also be of an unknown type. If the reconstruction loss is above anomaly threshold for its autoencoder (98 percentile), treat the fault as "Unknown fault"
+
+An advantage of this approach when compared to classification with a NN is that you might choose to train a custom autoencoder per fault type.
+This can be seen in our training setup, in which we varied the size and training process of the autoencoder based on the task:
+- Autoencoders for datasets 'NF', 'f_pic', 'f_iml' have 3 layers (per encoder/decoder), with 32, 16, 8 nodes and were trained for 30 epochs
+- Autoencoders for datasets 'f_waf' and 'f_pim' have 3 layers (per encoder/decoder), with 64, 32, 16 nodes and were trained for 25 epochs
+
+### Diagnosis
+1. For each new sample, compute reconstruction losses with all autoencoders
+2. Fault is isolated with the smallest loss
+3. However, fault might also be of an unknown type. If the smallest reconstruction loss is above anomaly threshold for its autoencoder (98 percentile), treat the fault as "Unknown fault"
 
 ## Structure and Results
 
@@ -39,4 +47,3 @@ pip install -r requirements.txt
 Category *Other* shows the classification rate of faults to unknown faults. **Note that for other we do not have actual samples**.
 
 **Time statistics:** Average time 0.0011 Max time 0.0039 (Intel(R) Core(TM) Ultra 5 125U (14 CPUs), ~1.3GHz)
-

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
+from sklearn.preprocessing import RobustScaler
 from torch.utils.data import DataLoader, Dataset
 
 from autoencoder import AutoEncoder, train_autoencoder, get_data_mean_squared_errors
@@ -65,10 +65,6 @@ for fault_type, files in  data_per_fault.items():
     print('----------------------------------------')
     print(fault_type)
 
-    if 'pic' not in fault_type:
-        continue
-
-
     # Load all files, filter, and concatenate
     all_data = pd.concat([get_all_data(training_folder + f) for f in files], ignore_index=True)
 
@@ -85,10 +81,10 @@ for fault_type, files in  data_per_fault.items():
 
     data_set = DxDataset(scaled_data)
     num_features = train_df.shape[1]
-    ae = AutoEncoder(input_dim=num_features, hidden_dimension=[128, 64, 32, 16,])
+    ae = AutoEncoder(input_dim=num_features, hidden_dimension=[32, 16, 8,])
 
     # train autoencoder
-    train_autoencoder(ae, DataLoader(data_set, batch_size=32, shuffle=True), 20,
+    train_autoencoder(ae, DataLoader(data_set, batch_size=32, shuffle=True), 25,
                       model_name=fault_type, save_path=save_path, save_every=1)
 
     # extract nominal loss and save to metadata json
