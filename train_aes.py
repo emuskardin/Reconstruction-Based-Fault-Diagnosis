@@ -52,10 +52,6 @@ all_fault_data = []
 for fault_type, files in data_per_fault.items():
     for f in files:
         df = get_all_data(training_folder + f)
-
-        if fault_type != 'NF':
-            df.query("time >= 120", inplace=True)
-
         df.drop(columns=['time'], inplace=True)
         all_fault_data.append(df)
 
@@ -69,8 +65,8 @@ scaler.fit(combined_data)
 joblib.dump(scaler, 'trained_models/scaler.sk')
 
 for fault_type, files in  data_per_fault.items():
-    # if fault_type not in {'f_pim', 'f_waf'}:
-    #     continue
+    if fault_type not in {'f_pim', 'f_waf'}:
+        continue
     print('----------------------------------------')
     print(fault_type)
 
@@ -91,14 +87,14 @@ for fault_type, files in  data_per_fault.items():
     data_set = DxDataset(scaled_data)
     num_features = train_df.shape[1]
 
-    ae_size = [32, 16, 8,]
+    ae_size = [16, 8, 4,]
     if fault_type in {'f_pim', 'f_waf'}:
-        ae_size = [64, 32, 16]
+        ae_size = [64, 32, 16, 8]
     ae = AutoEncoder(input_dim=num_features, hidden_dimension=ae_size)
 
     # train autoencoder
-    train_autoencoder(ae, DataLoader(data_set, batch_size=64, shuffle=True), 15,
-                      model_name=fault_type, save_path=save_path, save_every=1)
+    train_autoencoder(ae, DataLoader(data_set, batch_size=128, shuffle=True), 30,
+                      model_name=fault_type, save_path=save_path, save_every=None)
 
     # extract nominal loss and save to metadata json
     nominal_losses = get_data_mean_squared_errors(ae, data_set)
