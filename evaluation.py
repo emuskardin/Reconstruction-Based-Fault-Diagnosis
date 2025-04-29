@@ -11,18 +11,23 @@ import seaborn as sns
 from ae_based_diagnosis import AutoencoderBasedDiagnosis
 
 def load_csv_files_from_folder(folder_path):
-    dataframes = {}
+    faults = ['f_iml', 'f_pic', 'f_pim', 'f_waf', 'NF']
+    data_per_fault = {key: [] for key in faults}
+
+    # Iterate over files in the folder
     for file_name in os.listdir(folder_path):
-        if file_name.endswith('.csv'):
+        for key in faults:
             file_path = os.path.join(folder_path, file_name)
-            df = pd.read_csv(file_path)
 
-            if 'NF' not in file_path:
-                df.query("time >= 118", inplace=True)
+            if key in file_name:
+                df = pd.read_csv(file_path)
+                if 'NF' not in file_path:
+                    df.query("time >= 118", inplace=True)
 
-            dataframes[file_name] = df
+                data_per_fault[key].append(df)
+                break
 
-    return dataframes
+    return data_per_fault
 
 data_set = 'training_data'
 test_data = load_csv_files_from_folder(f'data/{data_set}')
@@ -37,17 +42,15 @@ predictor = AutoencoderBasedDiagnosis()
 predictor.Initialize()
 
 avg_time = []
-for data_set_name, data in test_data.items():
-    num_samples = data.shape[0]
+for data_set_name, data_frames in test_data.items():
     # print(num_samples)
 
     num_test_per_category = 1000
 
-    num_test = num_test_per_category if 'NF' in data_set_name or 'f_iml' in data_set_name or data_set == 'test_data' else num_test_per_category // 2
+    for _ in range(num_test_per_category):
+        data = random.choice(data_frames)
+        num_samples = data.shape[0]
 
-    # num_test = num_test_per_category
-
-    for _ in range(num_test):
         sample = data.iloc[random.randint(0, num_samples - 1),:].to_frame().transpose()
 
         s = time.time()

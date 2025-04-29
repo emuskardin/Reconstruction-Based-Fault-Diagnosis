@@ -78,7 +78,7 @@ class AutoencoderBasedDiagnosis:
             assert 0.99 <= sum(isolation) <= 1.01
 
         # conform to competition format
-        nominal_behaviour = np.array([nominal_behaviour], dtype=bool)
+        nominal_behaviour = np.array(nominal_behaviour, dtype=bool)
         isolation = isolation.reshape((1,5))
 
         return nominal_behaviour, isolation

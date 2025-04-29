@@ -1,3 +1,4 @@
+import os
 import json
 from statistics import mean, stdev
 
@@ -6,7 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, StandardScaler, MinMaxScaler
 from torch.utils.data import DataLoader, Dataset
 
 from autoencoder import AutoEncoder, train_autoencoder, get_data_mean_squared_errors
@@ -34,11 +35,17 @@ def get_all_data(path, fields_to_keep=None):
 training_folder = 'data/training_data/'
 save_path = 'trained_models/'
 
-data_per_fault = {'f_iml' : ['wltp_f_iml_6mm.csv'],
-                  'f_pic' : ['wltp_f_pic_090.csv', 'wltp_f_pic_110.csv'],
-                  'f_pim' : ['wltp_f_pim_080.csv', 'wltp_f_pim_090.csv'],
-                  'f_waf' : ['wltp_f_waf_105.csv', 'wltp_f_waf_110.csv'],
-                  'NF' : ['wltp_NF.csv']}
+faults = ['f_iml', 'f_pic', 'f_pim', 'f_waf', 'NF']
+data_per_fault = {key: [] for key in faults}
+
+# Path to the folder
+folder_path = 'data/training_data'
+
+# Iterate over files in the folder
+for filename in os.listdir(folder_path):
+    for key in faults:
+        if key in filename:
+            data_per_fault[key].append(filename)
 
 # First, load all data from all fault types to fit a single global scaler
 all_fault_data = []
@@ -47,13 +54,13 @@ for fault_type, files in data_per_fault.items():
         df = get_all_data(training_folder + f)
 
         if fault_type != 'NF':
-            df.query("time >= 115", inplace=True)
+            df.query("time >= 120", inplace=True)
 
         df.drop(columns=['time'], inplace=True)
         all_fault_data.append(df)
 
 # Create a single scaler instance for ALL fault types
-scaler = RobustScaler()
+scaler = StandardScaler()
 
 # Fit the scaler on all data across all fault types
 combined_data = pd.concat(all_fault_data, ignore_index=True)
@@ -62,6 +69,8 @@ scaler.fit(combined_data)
 joblib.dump(scaler, 'trained_models/scaler.sk')
 
 for fault_type, files in  data_per_fault.items():
+    # if fault_type not in {'f_pim', 'f_waf'}:
+    #     continue
     print('----------------------------------------')
     print(fault_type)
 
@@ -71,20 +80,24 @@ for fault_type, files in  data_per_fault.items():
     if fault_type != 'NF':
         all_data.query("time >= 118", inplace=True)
 
-    train_df, test_df = train_test_split(all_data, test_size=0.05, shuffle=True)
-    # train_df = all_data
+    # train_df, test_df = train_test_split(all_data, test_size=0.05, shuffle=True)
+    train_df = all_data
 
-    test_df.to_csv(f'data/test_data/test_set_{fault_type}.csv', index=False)
+    # test_df.to_csv(f'data/test_data/test_set_{fault_type}.csv', index=False)
 
     train_df.drop(columns=['time'], inplace=True)
     scaled_data = pd.DataFrame(scaler.transform(train_df), columns=train_df.columns)
 
     data_set = DxDataset(scaled_data)
     num_features = train_df.shape[1]
-    ae = AutoEncoder(input_dim=num_features, hidden_dimension=[32, 16, 8,])
+
+    ae_size = [32, 16, 8,]
+    if fault_type in {'f_pim', 'f_waf'}:
+        ae_size = [64, 32, 16]
+    ae = AutoEncoder(input_dim=num_features, hidden_dimension=ae_size)
 
     # train autoencoder
-    train_autoencoder(ae, DataLoader(data_set, batch_size=32, shuffle=True), 25,
+    train_autoencoder(ae, DataLoader(data_set, batch_size=64, shuffle=True), 15,
                       model_name=fault_type, save_path=save_path, save_every=1)
 
     # extract nominal loss and save to metadata json
