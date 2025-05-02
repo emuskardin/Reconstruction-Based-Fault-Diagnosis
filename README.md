@@ -13,14 +13,13 @@ Proposed method is **system-agnostic**, that it is doing not make any assumption
 ### High-level overview
 
 ### Training
-1. Scale the data using a scaler of your choice (we use Robust scaler)
+1. Scale the data using a scaler of your choice (we use Standard scaler)
 2. For each fault type train an autoencoder. You can vary the hyperparameters for each autoencoder, as long as they all use same scaled data. 
 3. Compute reconstruction losses with trained autoencoder, and 98 percentile of reconstruction losses serves as an anomaly treshold (last step)
 
 An advantage of this approach when compared to classification with a NN is that you might choose to train a custom autoencoder per fault type.
 This can be seen in our training setup, in which we varied the size and training process of the autoencoder based on the task:
-- Autoencoders for datasets 'NF', 'f_pic', 'f_iml' have 3 layers (per encoder/decoder), with 32, 16, 8 nodes and were trained for 30 epochs
-- Autoencoders for datasets 'f_waf' and 'f_pim' have 3 layers (per encoder/decoder), with 64, 32, 16 nodes and were trained for 25 epochs
+For more details about each model, check [trained_models](trained_models).
 
 ### Diagnosis
 1. For each new sample, compute reconstruction losses with all autoencoders
