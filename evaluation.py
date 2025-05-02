@@ -54,7 +54,7 @@ for data_set_name, data_frames in test_data.items():
         sample = data.iloc[random.randint(0, num_samples - 1),:].to_frame().transpose()
 
         s = time.time()
-        nominal_behaviour, isolation = predictor.Input(sample)
+        faulty_behaviour, isolation = predictor.Input(sample)
         avg_time.append(time.time() - s)
 
         # Find the actual dataset category
@@ -62,7 +62,7 @@ for data_set_name, data_frames in test_data.items():
         if actual_category is None:
             continue
 
-        if nominal_behaviour:
+        if not faulty_behaviour:
             predicted_category = dataset_mapping.index('NF')
         else:
             predicted_category = np.argmax(isolation) + 1 # +1 since NF is the first category in confusion matrix

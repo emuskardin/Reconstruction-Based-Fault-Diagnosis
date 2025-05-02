@@ -55,10 +55,10 @@ class AutoencoderBasedDiagnosis:
             self.out_of_distribution_hits += 1
 
         if min_loss_idx == 4:
-            nominal_behaviour = True
+            faulty_behaviour = False
             isolation = np.zeros((1, 5))
         else:
-            nominal_behaviour = False
+            faulty_behaviour = True
 
             # if reconstruction loss of the detected fault is within reconstruction loss
             x = torch.tensor(losses[:4])
@@ -78,8 +78,8 @@ class AutoencoderBasedDiagnosis:
             assert 0.99 <= sum(isolation) <= 1.01
 
         # conform to competition format
-        nominal_behaviour = np.array(nominal_behaviour, dtype=bool)
+        faulty_behaviour = np.array([faulty_behaviour], dtype=bool)
         isolation = isolation.reshape((1,5))
 
-        return nominal_behaviour, isolation
+        return faulty_behaviour, isolation
 
