@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this approach in research-context, please cite it as below."
+authors:
+- family-names: "Muskardin"
+  given-names: "Edi"
+  orcid: "https://orcid.org/0000-0000-0000-0000"
+title: "Reconstruction-Based Fault Classification"
+version: 1
+date-released: 2025-05-01
+url: "https://github.com/emuskardin/Reconstruction-Based-Fault-Diagnosis"
